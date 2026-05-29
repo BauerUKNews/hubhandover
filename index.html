@@ -361,7 +361,7 @@ const STATION_HEADERS = {
 };
 
 let parsedStories = [];
-let allStories = JSON.parse(localStorage.getItem('sw_hub_stories') || '[]');
+let allStories = [];
 let currentShift = localStorage.getItem('sw_hub_shift') || 'AM';
 let overrideDate = null;
 
@@ -491,15 +491,7 @@ function clearInput() {
 
 async function saveToSheets() {
   if (!parsedStories.length) { toast('Nothing to save'); return; }
-  const url = localStorage.getItem('sw_hub_sheets_url');
-  allStories = allStories.concat(parsedStories);
-  localStorage.setItem('sw_hub_stories', JSON.stringify(allStories));
-  updateTotalBadge(); updateTodaySubmissions();
-
-  if (!url) {
-    toast('Saved locally \u2014 add a Sheets URL in Setup to sync remotely');
-    clearPreview(); return;
-  }
+  const url = SHEETS_URL;
   try {
     const resp = await fetch(url, {
       method:'POST',
@@ -508,14 +500,15 @@ async function saveToSheets() {
     });
     const data = await resp.json();
     if (data.result === 'ok') {
-      toast('\u2713 ' + parsedStories.length + ' stories saved to Sheets');
+      toast('\u2713 ' + parsedStories.length + ' stories saved \u2014 reloading\u2026');
+      clearPreview();
+      await loadFromSheets();
     } else {
       toast('Sheets error: ' + (data.error || 'unknown'));
     }
   } catch(e) {
     toast('Could not reach Sheets: ' + e.message);
   }
-  clearPreview();
 }
 
 function runSearch() {
@@ -562,20 +555,16 @@ function fmtDate(iso) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
 
-async function loadFromSheets() {
-  const url = localStorage.getItem('sw_hub_sheets_url');
-  if (!url) { toast('No Sheets URL \u2014 see Setup'); return; }
-  toast('Fetching from Sheets\u2026');
+async function loadFromSheets(silent) {
   try {
-    const resp = await fetch(url + '?action=read');
+    const resp = await fetch(SHEETS_URL + '?action=read');
     const data = await resp.json();
     if (data.rows) {
       allStories = data.rows;
-      localStorage.setItem('sw_hub_stories', JSON.stringify(allStories));
-      updateStats(); updateTotalBadge();
-      toast('\u2713 Loaded ' + allStories.length + ' stories from Sheets');
+      updateStats(); updateTotalBadge(); updateTodaySubmissions();
+      if (!silent) toast('\u2713 Loaded ' + allStories.length + ' stories from Sheets');
     }
-  } catch(e) { toast('Could not load from Sheets: ' + e.message); }
+  } catch(e) { if (!silent) toast('Could not load from Sheets: ' + e.message); }
 }
 
 function updateStats() {
@@ -715,9 +704,10 @@ function esc(s) {
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwVihaZqGhlMO-cvAyzv18Rzpu_nFZ_luPoTu7PuntEqIL6SXCe4sy6Y09-xfZO5GW9CA/exec';
 
 function init() {
-  localStorage.setItem('sw_hub_sheets_url', SHEETS_URL);
+  localStorage.removeItem('sw_hub_stories');
   document.getElementById('sheets-url').value = SHEETS_URL;
-  updateSheetStatus(); updateTotalBadge(); updateStats(); updateTodaySubmissions();
+  updateSheetStatus();
+  loadFromSheets(true);
 }
 init();
 </script>
