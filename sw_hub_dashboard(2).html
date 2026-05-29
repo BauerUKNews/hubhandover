@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SW Hub — Story Handover Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #C0272D; --ink: #111213; --ink-2: #3A3B3D; --ink-3: #6B6D72;
+    --rule: #DDDFE3; --surface: #F5F6F8; --white: #FFFFFF;
+    --green: #1A7A4A; --amber: #B85C00; --amber-light: #FEF3E6;
+    --blue: #1A4F8A; --blue-light: #E8EFF8;
+    --am: #1A4F8A; --am-light: #E8EFF8; --pm: #7A3A9A; --pm-light: #F3EBF9;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 14px; }
+  .masthead { background: var(--ink); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; border-bottom: 3px solid var(--red); }
+  .masthead-brand { display: flex; align-items: baseline; gap: 10px; }
+  .masthead-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.04em; color: var(--white); text-transform: uppercase; }
+  .masthead-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 400; color: var(--red); letter-spacing: 0.12em; text-transform: uppercase; }
+  .clock { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; color: #9CA0A8; letter-spacing: 0.06em; }
+  .shift-bar { background: var(--white); border-bottom: 1px solid var(--rule); padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+  .shift-label { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  .shift-toggle { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .shift-btn { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.1em; padding: 6px 22px; cursor: pointer; border: none; background: var(--white); color: var(--ink-3); transition: background 0.15s, color 0.15s; user-select: none; }
+  .shift-btn.active-am { background: var(--am); color: var(--white); }
+  .shift-btn.active-pm { background: var(--pm); color: var(--white); }
+  .shift-btn:not(.active-am):not(.active-pm):hover { background: var(--surface); }
+  .date-override { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .date-override-label { font-size: 13px; color: var(--ink-3); }
+  .date-today-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 20px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule); }
+  .date-change-btn { font-size: 12px; color: var(--ink-3); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+  .date-change-btn:hover { color: var(--red); }
+  input#date-override-input { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 5px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--white); color: var(--ink); outline: none; display: none; }
+  input#date-override-input:focus { border-color: var(--red); }
+  .nav-tabs { background: var(--white); border-bottom: 1px solid var(--rule); display: flex; padding: 0 24px; }
+  .nav-tab { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 14px 20px 12px; cursor: pointer; color: var(--ink-3); border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; user-select: none; }
+  .nav-tab:hover { color: var(--ink); }
+  .nav-tab.active { color: var(--red); border-bottom-color: var(--red); }
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+  .card-body { padding: 18px; }
+  .submit-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+  label.field-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 6px; }
+  select, input[type="date"], input[type="text"] { font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--white); color: var(--ink); appearance: none; -webkit-appearance: none; outline: none; transition: border-color 0.15s; }
+  select:focus, input:focus { border-color: var(--red); }
+  select { padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6D72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  textarea#handover-input { font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.6; width: 100%; height: 320px; padding: 14px; border: 1px solid var(--rule); border-radius: 6px; resize: vertical; background: var(--surface); color: var(--ink); outline: none; transition: border-color 0.15s; }
+  textarea#handover-input:focus { border-color: var(--red); background: var(--white); }
+  .btn { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 22px; border-radius: 6px; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--red); color: var(--white); }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary { background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule); }
+  .btn-secondary:hover { background: var(--rule); }
+  .btn-sm { font-size: 12px; padding: 6px 14px; }
+  .station-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 14px; }
+  table.story-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.story-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--rule); background: var(--surface); }
+  table.story-table td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  table.story-table tr:last-child td { border-bottom: none; }
+  table.story-table tr:hover td { background: var(--surface); }
+  .slug-cell { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; color: var(--ink); white-space: nowrap; }
+  .flag-audio { display: inline-block; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+  .desc-cell { color: var(--ink-2); line-height: 1.5; }
+  .station-badge { display: inline-block; background: var(--blue-light); color: var(--blue); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
+  .badge-am { display: inline-block; background: var(--am-light); color: var(--am); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
+  .badge-pm { display: inline-block; background: var(--pm-light); color: var(--pm); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
+  .tip-box { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--red); border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
+  .tip-box h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
+  .tip-box ul { padding-left: 16px; }
+  .tip-box li { color: var(--ink-3); margin-bottom: 5px; line-height: 1.5; }
+  .tip-box code { font-size: 12px; background: var(--rule); padding: 1px 4px; border-radius: 3px; color: #8B1A1E; }
+  .sheets-status { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--rule); font-size: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.green { background: var(--green); }
+  .status-dot.red { background: var(--red); }
+  .status-dot.amber { background: var(--amber); }
+  .search-bar-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+  .search-bar-row .field-group { display: flex; flex-direction: column; }
+  input#search-query { width: 260px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Barlow Condensed', sans-serif; }
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .setup-step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
+  .step-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+  .step-body h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; margin-bottom: 5px; }
+  .step-body p, .step-body li { color: var(--ink-3); line-height: 1.6; font-size: 13px; }
+  input.full-width { width: 100%; margin-top: 6px; }
+  .input-group { position: relative; }
+  .input-group input { padding-right: 80px; }
+  .input-group .inline-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; background: var(--ink); color: var(--white); border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--red); opacity: 0; transform: translateY(12px); transition: opacity 0.2s, transform 0.2s; z-index: 1000; max-width: 340px; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  .action-row { display: flex; gap: 10px; margin-top: 14px; align-items: center; }
+  .badge-count { display: inline-block; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+  .scrollable { max-height: 480px; overflow-y: auto; }
+  @media (max-width: 900px) { .submit-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .setup-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-brand">
+    <span class="masthead-title">SW Hub</span>
+    <span class="masthead-sub">Story Handover</span>
+  </div>
+  <span class="clock" id="live-clock">--:--:--</span>
+</div>
+
+<div class="shift-bar">
+  <span class="shift-label">Shift</span>
+  <div class="shift-toggle">
+    <button class="shift-btn" id="btn-am" onclick="setShift('AM')">AM</button>
+    <button class="shift-btn" id="btn-pm" onclick="setShift('PM')">PM</button>
+  </div>
+  <div class="date-override">
+    <span class="date-override-label">Date:</span>
+    <span class="date-today-pill" id="date-display">Today</span>
+    <button class="date-change-btn" id="date-change-btn" onclick="toggleDateOverride()">change</button>
+    <input type="date" id="date-override-input" onchange="onDateChange()">
+    <button class="date-change-btn" id="date-reset-btn" onclick="resetDate()" style="display:none; color:var(--red);">reset to today</button>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" data-panel="submit">Submit Handover</div>
+  <div class="nav-tab" data-panel="search">Search Stories <span class="badge-count" id="total-badge">0</span></div>
+  <div class="nav-tab" data-panel="setup">Setup</div>
+</div>
+
+<div class="main">
+
+  <div class="panel active" id="panel-submit">
+    <div class="submit-grid">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <span class="card-title">Handover Input</span>
+            <div class="sheets-status">
+              <span class="status-dot amber" id="status-dot"></span>
+              <span id="status-text">Sheets not configured</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="station-row">
+              <div>
+                <label class="field-label">Station</label>
+                <select id="station-select">
+                  <option value="">— Select or auto-detect —</option>
+                  <option>Cornwall</option>
+                  <option>Coventry &amp; Warwickshire</option>
+                  <option>Devon</option>
+                  <option>Dorset</option>
+                  <option>Gloucestershire</option>
+                  <option>Herefordshire &amp; Worcestershire</option>
+                  <option>Somerset</option>
+                  <option>Swindon</option>
+                  <option>West of England</option>
+                  <option>Wiltshire</option>
+                </select>
+              </div>
+            </div>
+            <label class="field-label">Paste handover text</label>
+            <textarea id="handover-input" placeholder="Paste the handover here e.g.&#10;&#10;    GLAMPING@ - Glamping company has already cut summer prices...&#10;    CQC - Cornwall Council adult social care rated as good...&#10;&#10;Station headers (e.g. CORNWALL) are auto-detected."></textarea>
+            <div class="action-row">
+              <button class="btn btn-primary" onclick="parseHandover()">Parse &amp; Preview</button>
+              <button class="btn btn-secondary" onclick="clearInput()">Clear</button>
+              <span id="parse-count" style="font-size:13px; color:var(--ink-3); margin-left:4px;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="preview-section" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Preview &mdash; <span id="preview-label"></span></span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="clearPreview()">Discard</button>
+                <button class="btn btn-primary btn-sm" onclick="saveToSheets()">Save to Sheets</button>
+              </div>
+            </div>
+            <div class="scrollable">
+              <table class="story-table">
+                <thead><tr><th>Slug</th><th>Description</th><th>Station</th></tr></thead>
+                <tbody id="preview-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="tip-box">
+          <h4>Format guide</h4>
+          <ul>
+            <li>One story per line: <code>SLUG - Description</code></li>
+            <li>Audio flagged with <code>@</code> on slug: <code>GLAMPING@</code></li>
+            <li>Blank lines and indentation are ignored</li>
+            <li>Station headers (e.g. <code>CORNWALL</code>) auto-detected</li>
+          </ul>
+        </div>
+        <div class="tip-box" style="border-left-color:var(--blue);">
+          <h4>Full hub paste</h4>
+          <ul>
+            <li>Paste the entire hub handover at once &mdash; all 10 stations parsed in one go</li>
+            <li>Leave station dropdown blank and it auto-detects each section</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header"><span class="card-title">Today's Submissions</span></div>
+          <div class="card-body" id="today-submissions">
+            <p style="color:var(--ink-3); font-size:13px;">No submissions yet today.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-search">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Stories</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-am">0</div><div class="stat-label">AM Stories</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-pm">0</div><div class="stat-label">PM Stories</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-days">0</div><div class="stat-label">Days Logged</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Search Archive</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadFromSheets()">Refresh from Sheets</button>
+      </div>
+      <div class="card-body">
+        <div class="search-bar-row">
+          <div class="field-group">
+            <label class="field-label">Keyword</label>
+            <input type="text" id="search-query" placeholder="slug or description...">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Station</label>
+            <select id="search-station">
+              <option value="">All stations</option>
+              <option>Cornwall</option>
+              <option>Coventry &amp; Warwickshire</option>
+              <option>Devon</option>
+              <option>Dorset</option>
+              <option>Gloucestershire</option>
+              <option>Herefordshire &amp; Worcestershire</option>
+              <option>Somerset</option>
+              <option>Swindon</option>
+              <option>West of England</option>
+              <option>Wiltshire</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Shift</label>
+            <select id="search-edition">
+              <option value="">AM &amp; PM</option>
+              <option value="AM">AM only</option>
+              <option value="PM">PM only</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">From</label>
+            <input type="date" id="search-from">
+          </div>
+          <div class="field-group">
+            <label class="field-label">To</label>
+            <input type="date" id="search-to">
+          </div>
+          <div class="field-group" style="justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="runSearch()">Search</button>
+          </div>
+        </div>
+        <div class="scrollable">
+          <table class="story-table">
+            <thead><tr><th>Date</th><th>Shift</th><th>Station</th><th>Slug</th><th>Description</th></tr></thead>
+            <tbody id="results-tbody">
+              <tr><td colspan="5" style="padding:32px; text-align:center; color:var(--ink-3);">Use the filters above and click Search</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--ink-3);" id="result-count"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-setup">
+    <div class="setup-grid">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Google Sheets Connection</span></div>
+        <div class="card-body">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Create a Google Sheet</h4>
+              <p>Create a new Google Sheet, rename the first tab to <strong>Stories</strong>, and add these headers in row 1:</p>
+              <p style="margin-top:8px; font-size:12px; background:var(--surface); padding:8px 10px; border-radius:4px; font-family:monospace; color:var(--ink-2);">Date &nbsp;|&nbsp; Shift &nbsp;|&nbsp; Station &nbsp;|&nbsp; Slug &nbsp;|&nbsp; Description</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Add the Apps Script</h4>
+              <p>Go to <strong>Extensions &rarr; Apps Script</strong>, paste the code, then deploy as a Web App (Execute as: Me, Access: Anyone). Copy the web app URL.</p>
+              <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="showAppsScript()">View Apps Script code</button>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Enter your Web App URL</h4>
+              <div class="input-group" style="margin-top:6px;">
+                <input type="text" id="sheets-url" class="full-width" placeholder="https://script.google.com/macros/s/\u2026/exec">
+                <button class="inline-btn" onclick="saveSheetUrl()">Save</button>
+              </div>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Test connection</h4>
+              <button class="btn btn-secondary btn-sm" onclick="testConnection()">Test connection</button>
+              <span id="connection-result" style="font-size:13px; margin-left:10px; color:var(--ink-3);"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Apps Script Code</span></div>
+        <div class="card-body" id="apps-script-panel" style="display:none;">
+          <p style="font-size:12px; color:var(--ink-3); margin-bottom:10px;">Paste this into your Apps Script editor:</p>
+          <pre id="apps-script-code" style="font-size:11px; background:var(--surface); padding:12px; border-radius:6px; overflow:auto; max-height:400px; color:var(--ink-2); line-height:1.5; white-space:pre-wrap;"></pre>
+          <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="copyAppsScript()">Copy to clipboard</button>
+        </div>
+        <div class="card-body" id="apps-script-hint">
+          <p style="color:var(--ink-3); font-size:13px;">Click "View Apps Script code" in step 2 to reveal.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const STATION_HEADERS = {
+  'CORNWALL':'Cornwall','COVENTRY':'Coventry & Warwickshire',
+  'COVENTRY & WARWICKSHIRE':'Coventry & Warwickshire','DEVON':'Devon',
+  'DORSET':'Dorset','GLOUCESTERSHIRE':'Gloucestershire',
+  'HEREFORDSHIRE':'Herefordshire & Worcestershire',
+  'HEREFORDSHIRE & WORCESTERSHIRE':'Herefordshire & Worcestershire',
+  'SOMERSET':'Somerset','SWINDON':'Swindon',
+  'WEST OF ENGLAND':'West of England','WILTSHIRE':'Wiltshire'
+};
+
+let parsedStories = [];
+let allStories = JSON.parse(localStorage.getItem('sw_hub_stories') || '[]');
+let currentShift = localStorage.getItem('sw_hub_shift') || 'AM';
+let overrideDate = null;
+
+function updateClock() {
+  document.getElementById('live-clock').textContent =
+    new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000); updateClock();
+
+function setShift(s) {
+  currentShift = s;
+  localStorage.setItem('sw_hub_shift', s);
+  document.getElementById('btn-am').className = 'shift-btn' + (s==='AM'?' active-am':'');
+  document.getElementById('btn-pm').className = 'shift-btn' + (s==='PM'?' active-pm':'');
+}
+setShift(currentShift);
+
+function getActiveDate() { return overrideDate || new Date().toISOString().split('T')[0]; }
+
+function toggleDateOverride() {
+  const inp = document.getElementById('date-override-input');
+  inp.style.display = 'block';
+  inp.value = getActiveDate();
+  inp.focus();
+  document.getElementById('date-change-btn').style.display = 'none';
+}
+
+function onDateChange() {
+  const val = document.getElementById('date-override-input').value;
+  const today = new Date().toISOString().split('T')[0];
+  if (!val || val === today) { resetDate(); return; }
+  overrideDate = val;
+  const d = new Date(val + 'T12:00:00');
+  const fmt = d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const pill = document.getElementById('date-display');
+  pill.textContent = fmt;
+  pill.style.cssText = 'background:#FEF3E6; border-color:#B85C00; color:#B85C00;';
+  document.getElementById('date-reset-btn').style.display = 'inline';
+}
+
+function resetDate() {
+  overrideDate = null;
+  document.getElementById('date-override-input').style.display = 'none';
+  document.getElementById('date-change-btn').style.display = 'inline';
+  document.getElementById('date-reset-btn').style.display = 'none';
+  const pill = document.getElementById('date-display');
+  pill.textContent = 'Today'; pill.style.cssText = '';
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    if (tab.dataset.panel === 'search') updateStats();
+  });
+});
+
+function parseHandover() {
+  const raw = document.getElementById('handover-input').value.trim();
+  if (!raw) { toast('Paste some handover text first'); return; }
+  const selectedStation = document.getElementById('station-select').value;
+  const date = getActiveDate();
+  const shift = currentShift;
+  const lines = raw.split('\n');
+  parsedStories = [];
+  let currentStation = selectedStation || null;
+  let detectedStations = [];
+
+  for (let raw_line of lines) {
+    const line = raw_line.trim();
+    if (!line) continue;
+    const upper = line.toUpperCase().replace(/[^A-Z& ]/g,'').trim();
+    if (STATION_HEADERS[upper] && !line.includes(' - ')) {
+      currentStation = STATION_HEADERS[upper];
+      if (!detectedStations.includes(currentStation)) detectedStations.push(currentStation);
+      continue;
+    }
+    if (!line.includes(' - ')) continue;
+    const dashIdx = line.indexOf(' - ');
+    let slugRaw = line.substring(0, dashIdx).trim().replace(/^[\s*\-]+/,'');
+    let desc = line.substring(dashIdx + 3).trim();
+    if (!slugRaw) continue;
+    const hasAudio = slugRaw.endsWith('@');
+    const slug = slugRaw.replace(/@$/,'').toUpperCase();
+    parsedStories.push({ date, shift, station: currentStation || selectedStation || '(unknown)', slug, hasAudio, description: desc });
+  }
+
+  if (!parsedStories.length) { toast('No stories found \u2014 check format (SLUG - Description)'); return; }
+  const label = selectedStation || (detectedStations.length ? detectedStations.join(', ') : 'Unknown');
+  renderPreview(parsedStories, label, date, shift);
+  document.getElementById('parse-count').textContent = parsedStories.length + ' ' + (parsedStories.length===1?'story':'stories') + ' parsed';
+}
+
+function renderPreview(stories, label, date, shift) {
+  const tbody = document.getElementById('preview-tbody');
+  tbody.innerHTML = '';
+  const d = new Date(date + 'T12:00:00');
+  const dateStr = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  const sc = shift==='AM'?'badge-am':'badge-pm';
+  document.getElementById('preview-label').innerHTML =
+    esc(label) + ' &nbsp;<span class="' + sc + '">' + shift + '</span>&nbsp; <span style="font-size:13px;font-weight:400;color:var(--ink-3);">' + dateStr + '</span>';
+
+  stories.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="slug-cell">' + esc(s.slug) + (s.hasAudio ? '<span class="flag-audio">AUDIO</span>' : '') + '</td>' +
+      '<td class="desc-cell">' + esc(s.description) + '</td>' +
+      '<td>' + (s.station !== label ? '<span class="station-badge">' + esc(s.station) + '</span>' : '') + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('preview-section').style.display = 'block';
+  document.getElementById('preview-section').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function clearPreview() {
+  parsedStories = [];
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('parse-count').textContent = '';
+}
+
+function clearInput() {
+  document.getElementById('handover-input').value = '';
+  clearPreview();
+}
+
+async function saveToSheets() {
+  if (!parsedStories.length) { toast('Nothing to save'); return; }
+  const url = localStorage.getItem('sw_hub_sheets_url');
+  allStories = allStories.concat(parsedStories);
+  localStorage.setItem('sw_hub_stories', JSON.stringify(allStories));
+  updateTotalBadge(); updateTodaySubmissions();
+
+  if (!url) {
+    toast('Saved locally \u2014 add a Sheets URL in Setup to sync remotely');
+    clearPreview(); return;
+  }
+  try {
+    const resp = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'append', rows: parsedStories})
+    });
+    const data = await resp.json();
+    if (data.result === 'ok') {
+      toast('\u2713 ' + parsedStories.length + ' stories saved to Sheets');
+    } else {
+      toast('Sheets error: ' + (data.error || 'unknown'));
+    }
+  } catch(e) {
+    toast('Could not reach Sheets: ' + e.message);
+  }
+  clearPreview();
+}
+
+function runSearch() {
+  const q = document.getElementById('search-query').value.toLowerCase();
+  const station = document.getElementById('search-station').value;
+  const edition = document.getElementById('search-edition').value;
+  const from = document.getElementById('search-from').value;
+  const to = document.getElementById('search-to').value;
+
+  let results = allStories.filter(s => {
+    if (station && s.station !== station) return false;
+    if (edition && s.shift !== edition) return false;
+    if (from && s.date < from) return false;
+    if (to && s.date > to) return false;
+    if (q && !s.slug.toLowerCase().includes(q) && !s.description.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('results-tbody');
+  tbody.innerHTML = '';
+  if (!results.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--ink-3);">No matching stories</td></tr>';
+    document.getElementById('result-count').textContent = ''; return;
+  }
+
+  results.sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+  results.forEach(s => {
+    const sc = s.shift==='AM'?'badge-am':'badge-pm';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td style="white-space:nowrap;color:var(--ink-3);font-size:12px;">' + esc(fmtDate(s.date)) + '</td>' +
+      '<td><span class="' + sc + '">' + esc(s.shift||'') + '</span></td>' +
+      '<td><span class="station-badge">' + esc(s.station) + '</span></td>' +
+      '<td class="slug-cell">' + esc(s.slug) + (s.hasAudio?'<span class="flag-audio">AUDIO</span>':'') + '</td>' +
+      '<td class="desc-cell">' + esc(s.description) + '</td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('result-count').textContent = results.length + ' result' + (results.length!==1?'s':'') + ' found';
+}
+
+document.getElementById('search-query').addEventListener('keydown', e => { if(e.key==='Enter') runSearch(); });
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+
+async function loadFromSheets() {
+  const url = localStorage.getItem('sw_hub_sheets_url');
+  if (!url) { toast('No Sheets URL \u2014 see Setup'); return; }
+  toast('Fetching from Sheets\u2026');
+  try {
+    const resp = await fetch(url + '?action=read');
+    const data = await resp.json();
+    if (data.rows) {
+      allStories = data.rows;
+      localStorage.setItem('sw_hub_stories', JSON.stringify(allStories));
+      updateStats(); updateTotalBadge();
+      toast('\u2713 Loaded ' + allStories.length + ' stories from Sheets');
+    }
+  } catch(e) { toast('Could not load from Sheets: ' + e.message); }
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = allStories.length;
+  document.getElementById('stat-am').textContent = allStories.filter(s=>s.shift==='AM').length;
+  document.getElementById('stat-pm').textContent = allStories.filter(s=>s.shift==='PM').length;
+  document.getElementById('stat-days').textContent = new Set(allStories.map(s=>s.date)).size;
+}
+
+function updateTotalBadge() { document.getElementById('total-badge').textContent = allStories.length; }
+
+function updateTodaySubmissions() {
+  const today = new Date().toISOString().split('T')[0];
+  const ts = allStories.filter(s => s.date === today);
+  const el = document.getElementById('today-submissions');
+  if (!ts.length) { el.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No submissions yet today.</p>'; return; }
+  const byStation = {};
+  ts.forEach(s => { byStation[s.station] = (byStation[s.station]||0) + 1; });
+  el.innerHTML = Object.entries(byStation).map(([st,c]) =>
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule);font-size:13px;"><span>' + esc(st) + '</span><span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;color:var(--red);">' + c + '</span></div>'
+  ).join('') + '<p style="margin-top:10px;font-size:12px;color:var(--ink-3);">' + ts.length + ' total today</p>';
+}
+
+function saveSheetUrl() {
+  const url = document.getElementById('sheets-url').value.trim();
+  if (!url) { toast('Paste the web app URL first'); return; }
+  localStorage.setItem('sw_hub_sheets_url', url);
+  updateSheetStatus(); toast('Sheets URL saved');
+}
+
+function updateSheetStatus() {
+  const url = localStorage.getItem('sw_hub_sheets_url');
+  document.getElementById('status-dot').className = 'status-dot ' + (url?'green':'amber');
+  document.getElementById('status-text').textContent = url ? 'Sheets connected' : 'Sheets not configured';
+}
+
+async function testConnection() {
+  const url = localStorage.getItem('sw_hub_sheets_url');
+  const el = document.getElementById('connection-result');
+  if (!url) { el.textContent = 'No URL saved'; el.style.color='var(--red)'; return; }
+  el.textContent = 'Testing\u2026'; el.style.color='var(--ink-3)';
+  try {
+    const resp = await fetch(url + '?action=ping');
+    const data = await resp.json();
+    if (data.result==='pong') { el.textContent='\u2713 Connected!'; el.style.color='var(--green)'; }
+    else { el.textContent='\u26a0 Unexpected response'; el.style.color='var(--amber)'; }
+  } catch(e) { el.textContent='\u2717 Failed: ' + e.message; el.style.color='var(--red)'; }
+}
+
+const APPS_SCRIPT = `function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Stories');
+    var body = JSON.parse(e.postData.contents);
+    if (body.action === 'append') {
+      body.rows.forEach(function(r) {
+        sheet.appendRow([r.date, r.shift, r.station, r.slug, r.description]);
+      });
+      return ContentService
+        .createTextOutput(JSON.stringify({result:'ok', count: body.rows.length}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({result:'error', error:'Unknown action'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({result:'error', error: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  try {
+    var action = e.parameter.action;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (action === 'ping') {
+      return ContentService
+        .createTextOutput(JSON.stringify({result:'pong'}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'read') {
+      var sheet = ss.getSheetByName('Stories');
+      var data = sheet.getDataRange().getValues();
+      if (data.length <= 1) {
+        return ContentService
+          .createTextOutput(JSON.stringify({result:'ok', rows:[]}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      var rows = data.slice(1).map(function(row) {
+        return {
+          date: row[0] instanceof Date
+            ? Utilities.formatDate(row[0], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+            : String(row[0]),
+          shift:       String(row[1] || ''),
+          station:     String(row[2] || ''),
+          slug:        String(row[3] || ''),
+          description: String(row[4] || '')
+        };
+      });
+      return ContentService
+        .createTextOutput(JSON.stringify({result:'ok', rows: rows}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({result:'error', error:'Unknown action'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({result:'error', error: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+function showAppsScript() {
+  document.getElementById('apps-script-code').textContent = APPS_SCRIPT;
+  document.getElementById('apps-script-panel').style.display = 'block';
+  document.getElementById('apps-script-hint').style.display = 'none';
+}
+function copyAppsScript() {
+  navigator.clipboard.writeText(APPS_SCRIPT).then(() => toast('Apps Script code copied'));
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function esc(s) {
+  if (!s && s!==0) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwVihaZqGhlMO-cvAyzv18Rzpu_nFZ_luPoTu7PuntEqIL6SXCe4sy6Y09-xfZO5GW9CA/exec';
+
+function init() {
+  localStorage.setItem('sw_hub_sheets_url', SHEETS_URL);
+  document.getElementById('sheets-url').value = SHEETS_URL;
+  updateSheetStatus(); updateTotalBadge(); updateStats(); updateTodaySubmissions();
+}
+init();
+</script>
+</body>
+</html>
