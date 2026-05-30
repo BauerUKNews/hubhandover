@@ -3,188 +3,468 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SW Hub — Story Handover Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>SW Hub — Story Handover</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --red: #C0272D; --ink: #111213; --ink-2: #3A3B3D; --ink-3: #6B6D72;
-    --rule: #DDDFE3; --surface: #F5F6F8; --white: #FFFFFF;
-    --green: #1A7A4A; --amber: #B85C00; --amber-light: #FEF3E6;
-    --blue: #1A4F8A; --blue-light: #E8EFF8;
-    --am: #1A4F8A; --am-light: #E8EFF8; --pm: #7A3A9A; --pm-light: #F3EBF9;
-  }
-  body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 14px; }
-  .masthead { background: var(--ink); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; border-bottom: 3px solid var(--red); }
-  .masthead-brand { display: flex; align-items: baseline; gap: 10px; }
-  .masthead-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.04em; color: var(--white); text-transform: uppercase; }
-  .masthead-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 400; color: var(--red); letter-spacing: 0.12em; text-transform: uppercase; }
-  .clock { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; color: #9CA0A8; letter-spacing: 0.06em; }
-  .shift-bar { background: var(--white); border-bottom: 1px solid var(--rule); padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
-  .shift-label { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
-  .shift-toggle { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
-  .shift-btn { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.1em; padding: 6px 22px; cursor: pointer; border: none; background: var(--white); color: var(--ink-3); transition: background 0.15s, color 0.15s; user-select: none; }
-  .shift-btn.active-am { background: var(--am); color: var(--white); }
-  .shift-btn.active-pm { background: var(--pm); color: var(--white); }
-  .shift-btn:not(.active-am):not(.active-pm):hover { background: var(--surface); }
-  .date-override { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-  .date-override-label { font-size: 13px; color: var(--ink-3); }
-  .date-today-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 20px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule); }
-  .date-change-btn { font-size: 12px; color: var(--ink-3); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
-  .date-change-btn:hover { color: var(--red); }
-  input#date-override-input { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 5px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--white); color: var(--ink); outline: none; display: none; }
-  input#date-override-input:focus { border-color: var(--red); }
-  .nav-tabs { background: var(--white); border-bottom: 1px solid var(--rule); display: flex; padding: 0 24px; }
-  .nav-tab { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 14px 20px 12px; cursor: pointer; color: var(--ink-3); border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; user-select: none; }
-  .nav-tab:hover { color: var(--ink); }
-  .nav-tab.active { color: var(--red); border-bottom-color: var(--red); }
-  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
-  .panel { display: none; }
-  .panel.active { display: block; }
-  .card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
-  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
-  .card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
-  .card-body { padding: 18px; }
-  .submit-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
-  label.field-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 6px; }
-  select, input[type="date"], input[type="text"] { font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--white); color: var(--ink); appearance: none; -webkit-appearance: none; outline: none; transition: border-color 0.15s; }
-  select:focus, input:focus { border-color: var(--red); }
-  select { padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6D72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
-  textarea#handover-input { font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.6; width: 100%; height: 320px; padding: 14px; border: 1px solid var(--rule); border-radius: 6px; resize: vertical; background: var(--surface); color: var(--ink); outline: none; transition: border-color 0.15s; }
-  textarea#handover-input:focus { border-color: var(--red); background: var(--white); }
-  .btn { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 22px; border-radius: 6px; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary { background: var(--red); color: var(--white); }
-  .btn-primary:hover { opacity: 0.88; }
-  .btn-secondary { background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule); }
-  .btn-secondary:hover { background: var(--rule); }
-  .btn-sm { font-size: 12px; padding: 6px 14px; }
-  .station-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 14px; }
-  table.story-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.story-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--rule); background: var(--surface); }
-  table.story-table td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-  table.story-table tr:last-child td { border-bottom: none; }
-  table.story-table tr:hover td { background: var(--surface); }
-  .slug-cell { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; color: var(--ink); white-space: nowrap; }
-  .flag-audio { display: inline-block; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
-  .desc-cell { color: var(--ink-2); line-height: 1.5; }
-  .station-badge { display: inline-block; background: var(--blue-light); color: var(--blue); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
-  .badge-am { display: inline-block; background: var(--am-light); color: var(--am); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
-  .badge-pm { display: inline-block; background: var(--pm-light); color: var(--pm); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
-  .tip-box { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--red); border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
-  .tip-box h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
-  .tip-box ul { padding-left: 16px; }
-  .tip-box li { color: var(--ink-3); margin-bottom: 5px; line-height: 1.5; }
-  .tip-box code { font-size: 12px; background: var(--rule); padding: 1px 4px; border-radius: 3px; color: #8B1A1E; }
-  .sheets-status { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--rule); font-size: 12px; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .status-dot.green { background: var(--green); }
-  .status-dot.red { background: var(--red); }
-  .status-dot.amber { background: var(--amber); }
-  .search-bar-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
-  .search-bar-row .field-group { display: flex; flex-direction: column; }
-  input#search-query { width: 260px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-  .stat-card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
-  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1; margin-bottom: 4px; }
-  .stat-label { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Barlow Condensed', sans-serif; }
-  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .setup-step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
-  .step-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; }
-  .step-body h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; margin-bottom: 5px; }
-  .step-body p, .step-body li { color: var(--ink-3); line-height: 1.6; font-size: 13px; }
-  input.full-width { width: 100%; margin-top: 6px; }
-  .input-group { position: relative; }
-  .input-group input { padding-right: 80px; }
-  .input-group .inline-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; background: var(--ink); color: var(--white); border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
-  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--red); opacity: 0; transform: translateY(12px); transition: opacity 0.2s, transform 0.2s; z-index: 1000; max-width: 340px; pointer-events: none; }
-  #toast.show { opacity: 1; transform: translateY(0); }
-  .action-row { display: flex; gap: 10px; margin-top: 14px; align-items: center; }
-  .badge-count { display: inline-block; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
-  .scrollable { max-height: 480px; overflow-y: auto; }
-  @media (max-width: 900px) { .submit-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .setup-grid { grid-template-columns: 1fr; } }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --purple:#4700A3;
+  --purple-dark:#330075;
+  --purple-mid:#6B2FCC;
+  --purple-light:#EDE6F9;
+  --teal:#1FD1BD;
+  --teal-dark:#15A899;
+  --teal-light:#E4FAF8;
+  --ink:#111213;
+  --ink-2:#3A3B3D;
+  --ink-3:#6B6D72;
+  --rule:#E2E4E9;
+  --surface:#F4F5F8;
+  --white:#FFFFFF;
+  --am:#1A4F8A;
+  --am-light:#E8EFF8;
+  --pm:#7A3A9A;
+  --pm-light:#F3EBF9;
+  --green:#1A7A4A;
+  --amber:#B85C00;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;font-size:14px}
+
+/* ── HEADER ── */
+.header{
+  background:var(--purple-dark);
+  padding:0 32px;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.header-brand{display:flex;align-items:center;gap:14px}
+.header-logo svg{display:block}
+.header-divider{width:1px;height:28px;background:rgba(255,255,255,0.2)}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.06em;color:var(--white);text-transform:uppercase}
+.header-sub{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.14em;color:var(--teal);text-transform:uppercase;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:20px}
+.clock{font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:0.08em;color:rgba(255,255,255,0.5)}
+.back-btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:0.1em;
+  text-transform:uppercase;color:rgba(255,255,255,0.6);background:none;border:none;
+  cursor:pointer;display:none;align-items:center;gap:6px;padding:6px 0;
+  transition:color 0.15s;
+}
+.back-btn:hover{color:var(--teal)}
+.back-btn svg{flex-shrink:0}
+
+/* ── VIEWS ── */
+.view{display:none}
+.view.active{display:block}
+
+/* ══ HOME ══ */
+.home{
+  min-height:calc(100vh - 60px);
+  background:linear-gradient(145deg, var(--purple-dark) 0%, var(--purple) 60%, var(--purple-mid) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 24px;
+  position:relative;overflow:hidden;
+}
+.home::before{
+  content:'';position:absolute;top:-120px;right:-120px;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle, rgba(31,209,189,0.15) 0%, transparent 70%);
+}
+.home::after{
+  content:'';position:absolute;bottom:-80px;left:-80px;
+  width:360px;height:360px;border-radius:50%;
+  background:radial-gradient(circle, rgba(31,209,189,0.1) 0%, transparent 70%);
+}
+.home-content{position:relative;z-index:1;text-align:center;max-width:600px}
+.home-eyebrow{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);margin-bottom:16px;
+}
+.home-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:52px;
+  line-height:1;color:var(--white);text-transform:uppercase;letter-spacing:0.02em;
+  margin-bottom:12px;
+}
+.home-title span{color:var(--teal)}
+.home-date{
+  font-family:'Barlow Condensed',sans-serif;font-size:17px;letter-spacing:0.08em;
+  color:rgba(255,255,255,0.45);margin-bottom:56px;
+}
+.home-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:520px}
+.home-card{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:16px;padding:32px 24px;
+  cursor:pointer;transition:background 0.2s,border-color 0.2s,transform 0.15s;
+  text-align:left;position:relative;overflow:hidden;
+}
+.home-card::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--teal);transform:scaleX(0);transition:transform 0.2s;transform-origin:left;
+}
+.home-card:hover{background:rgba(255,255,255,0.12);border-color:rgba(31,209,189,0.4);transform:translateY(-2px)}
+.home-card:hover::before{transform:scaleX(1)}
+.home-card-icon{
+  width:48px;height:48px;border-radius:12px;
+  background:rgba(31,209,189,0.15);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+}
+.home-card-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;
+  letter-spacing:0.04em;text-transform:uppercase;color:var(--white);margin-bottom:8px;
+}
+.home-card-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5}
+.home-card-arrow{
+  position:absolute;top:24px;right:24px;
+  color:rgba(255,255,255,0.25);transition:color 0.2s;
+}
+.home-card:hover .home-card-arrow{color:var(--teal)}
+
+/* ── VIEW HEADER BAR ── */
+.view-bar{
+  background:var(--purple);
+  padding:14px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:3px solid var(--teal);
+}
+.view-bar-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--white);
+}
+.view-bar-right{display:flex;align-items:center;gap:12px}
+
+/* ── SHIFT TOGGLE ── */
+.shift-toggle{display:flex;border:1px solid rgba(255,255,255,0.2);border-radius:6px;overflow:hidden}
+.shift-btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.1em;
+  padding:6px 20px;cursor:pointer;border:none;
+  background:transparent;color:rgba(255,255,255,0.5);
+  transition:background 0.15s,color 0.15s;user-select:none;
+}
+.shift-btn.active-am{background:var(--am);color:var(--white)}
+.shift-btn.active-pm{background:var(--pm);color:var(--white)}
+
+.date-pill-wrap{display:flex;align-items:center;gap:8px}
+.date-pill{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;
+  padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.15);
+}
+.date-pill.overridden{background:rgba(184,92,0,0.3);border-color:rgba(184,92,0,0.6);color:#FFB366}
+.date-change-btn{
+  font-size:12px;color:rgba(255,255,255,0.4);background:none;border:none;
+  cursor:pointer;text-decoration:underline;padding:0;
+}
+.date-change-btn:hover{color:var(--teal)}
+input#date-override-input{
+  font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 10px;
+  border:1px solid rgba(255,255,255,0.2);border-radius:6px;
+  background:rgba(255,255,255,0.1);color:var(--white);outline:none;display:none;
+}
+
+/* ── MAIN CONTENT ── */
+.view-content{padding:28px 32px;max-width:1400px;margin:0 auto}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.card-header{
+  padding:14px 20px;border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-2);
+}
+.card-body{padding:20px}
+
+/* ── HANDOVER LAYOUT ── */
+.handover-grid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+
+label.field-label{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:6px;
+}
+select{
+  font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 32px 8px 12px;
+  border:1px solid var(--rule);border-radius:6px;background:var(--white);color:var(--ink);
+  appearance:none;-webkit-appearance:none;outline:none;transition:border-color 0.15s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6D72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+select:focus{border-color:var(--purple)}
+
+textarea#handover-input{
+  font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.6;
+  width:100%;height:300px;padding:14px;
+  border:1px solid var(--rule);border-radius:6px;resize:vertical;
+  background:var(--surface);color:var(--ink);outline:none;transition:border-color 0.15s;
+}
+textarea#handover-input:focus{border-color:var(--purple);background:var(--white)}
+
+.btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:0.08em;text-transform:uppercase;
+  padding:10px 22px;border-radius:6px;cursor:pointer;border:none;
+  transition:opacity 0.15s,transform 0.1s;
+}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--purple);color:var(--white)}
+.btn-primary:hover{background:var(--purple-mid)}
+.btn-teal{background:var(--teal);color:var(--purple-dark)}
+.btn-teal:hover{background:var(--teal-dark)}
+.btn-ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--rule)}
+.btn-ghost:hover{background:var(--rule)}
+.btn-sm{font-size:12px;padding:6px 14px}
+.action-row{display:flex;gap:10px;margin-top:14px;align-items:center}
+
+/* ── TABLES ── */
+table.story-table{width:100%;border-collapse:collapse;font-size:13px}
+table.story-table th{
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);
+  padding:8px 12px;text-align:left;border-bottom:2px solid var(--rule);background:var(--surface);
+}
+table.story-table td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.story-table tr:last-child td{border-bottom:none}
+table.story-table tr:hover td{background:#fafafa}
+.slug-cell{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.03em;color:var(--ink);white-space:nowrap}
+.desc-cell{color:var(--ink-2);line-height:1.5}
+.flag-audio{display:inline-block;background:var(--purple);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.station-badge{display:inline-block;background:var(--purple-light);color:var(--purple);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.badge-am{display:inline-block;background:var(--am-light);color:var(--am);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:2px 7px;border-radius:3px}
+.badge-pm{display:inline-block;background:var(--pm-light);color:var(--pm);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:2px 7px;border-radius:3px}
+.scrollable{max-height:460px;overflow-y:auto}
+
+/* ── TIPS ── */
+.tip-box{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--teal);border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.tip-box h4{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px}
+.tip-box ul{padding-left:16px}
+.tip-box li{color:var(--ink-3);margin-bottom:4px;line-height:1.5;font-size:13px}
+.tip-box code{font-size:11px;background:var(--rule);padding:1px 4px;border-radius:3px;color:var(--purple)}
+
+/* ── TODAY SIDEBAR ── */
+.today-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.today-count{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--purple)}
+
+/* ── STATUS DOT ── */
+.sheets-status{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:6px;border:1px solid var(--rule);font-size:12px}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-dot.green{background:var(--green)}
+.status-dot.amber{background:var(--amber)}
+
+/* ══ ARCHIVE VIEW ══ */
+.archive-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+
+/* ── CALENDAR ── */
+.cal-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.cal-header{
+  background:var(--purple);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.cal-month{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.06em;text-transform:uppercase;color:var(--white)}
+.cal-nav{background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:4px;transition:color 0.15s}
+.cal-nav:hover{color:var(--teal)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:12px}
+.cal-dow{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--ink-3);text-align:center;padding:4px 0;text-transform:uppercase}
+.cal-day{
+  text-align:center;padding:6px 2px;font-size:13px;border-radius:6px;
+  cursor:pointer;transition:background 0.12s,color 0.12s;position:relative;color:var(--ink-2);
+}
+.cal-day:hover{background:var(--purple-light);color:var(--purple)}
+.cal-day.empty{cursor:default}
+.cal-day.today{font-weight:600;color:var(--purple)}
+.cal-day.today::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--teal)}
+.cal-day.selected{background:var(--purple);color:var(--white)}
+.cal-day.selected:hover{background:var(--purple-mid)}
+.cal-day.has-stories::before{content:'';position:absolute;top:3px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+.cal-day.selected.has-stories::before{background:rgba(255,255,255,0.7)}
+
+/* ── SEARCH FILTERS ── */
+.search-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+.field-group{display:flex;flex-direction:column}
+input[type="text"]{
+  font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 12px;
+  border:1px solid var(--rule);border-radius:6px;background:var(--white);
+  color:var(--ink);outline:none;transition:border-color 0.15s;
+}
+input[type="text"]:focus{border-color:var(--purple)}
+input#search-query{width:220px}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:14px 16px}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:var(--purple);line-height:1;margin-bottom:3px}
+.stat-label{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.08em;font-family:'Barlow Condensed',sans-serif}
+
+/* ── DATE HEADING ── */
+.date-heading{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--purple);
+  padding:0 0 10px;border-bottom:2px solid var(--teal);margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--purple-dark);color:var(--white);
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  padding:12px 20px;border-radius:8px;border-left:4px solid var(--teal);
+  opacity:0;transform:translateY(12px);transition:opacity 0.2s,transform 0.2s;
+  z-index:1000;max-width:340px;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  .handover-grid{grid-template-columns:1fr}
+  .archive-layout{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .home-cards{grid-template-columns:1fr}
+  .home-title{font-size:38px}
+}
 </style>
 </head>
 <body>
 
-<div class="masthead">
-  <div class="masthead-brand">
-    <span class="masthead-title">SW Hub</span>
-    <span class="masthead-sub">Story Handover</span>
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-brand">
+    <button class="back-btn" id="back-btn" onclick="goHome()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Home
+    </button>
+    <div class="header-logo">
+      <svg width="32" height="19" viewBox="0 0 32 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2.3 0C1.03 0 0 1.03 0 2.3V4.7L0.57 5.02V3.22C0.57 2.57 0.71 2.1 0.97 1.97V0.55C0.97 -0.68 2 0 2.3 0Z" fill="#1FD1BD"/>
+        <path d="M2.3 11L2.86 10.67V6.38L2.3 6.06L1.84 5.8C1.74 5.74 1.64 5.7 1.56 5.67C1.16 5.56 0.81 5.7 0.64 5.98C0.57 6.11 0.54 6.26 0.54 6.44V12.2C0.54 12.37 0.57 12.5 0.64 12.59C0.74 12.73 0.9 12.81 1.1 12.81C1.29 12.81 1.44 12.75 1.56 12.63C1.65 12.53 1.7 12.38 1.7 12.2V5.68L2.3 6.01V11Z" fill="#1FD1BD"/>
+        <path d="M5.75 1.98C5.51 1.98 5.31 2.16 5.29 2.39H6.21C6.19 2.16 5.99 1.98 5.75 1.98Z" fill="#1FD1BD"/>
+        <path d="M5.29 16.28C5.29 16.54 5.51 16.75 5.75 16.75C5.99 16.75 6.21 16.54 6.21 16.28V15.69H5.29V16.28Z" fill="#1FD1BD"/>
+        <path d="M5.29 6.65L6.21 7.2V3.6H5.29V6.65Z" fill="#1FD1BD"/>
+        <path d="M5.29 14.47H6.21V9.69L5.29 10.24V14.47Z" fill="#1FD1BD"/>
+        <path d="M7.48 5.89C7.22 5.89 7.01 6.12 7.01 6.37V12.36C7.01 12.61 7.22 12.84 7.48 12.84C7.74 12.84 7.95 12.61 7.95 12.36V6.37C7.95 6.12 7.74 5.89 7.48 5.89Z" fill="#1FD1BD"/>
+        <path d="M12.65 4.97C12.39 4.97 12.18 5.2 12.18 5.45V10.09C12.44 10.63 12.6 11.23 12.6 11.86C12.6 12.23 12.55 12.59 12.45 12.92C12.39 13.12 12.32 13.31 12.23 13.49C12.31 13.64 12.46 13.74 12.65 13.74C12.91 13.74 13.12 13.52 13.12 13.26V5.45C13.12 5.2 12.91 4.97 12.65 4.97Z" fill="#1FD1BD"/>
+        <path d="M8.93 3.87C8.81 3.96 8.73 4.1 8.73 4.26V14.48C9.07 14.45 9.38 14.38 9.67 14.28V9.21C9.63 9.19 9.6 9.17 9.57 9.15C9.12 8.91 9.01 8.72 9.01 8.49C9.01 8.29 9.08 8.11 9.35 7.84C9.46 7.73 9.56 7.61 9.67 7.48V4.37C9.48 4.16 9.23 3.99 8.93 3.87Z" fill="#1FD1BD"/>
+        <path d="M3.59 9.87L4.49 9.37V7.57L3.59 7.07V9.87Z" fill="#1FD1BD"/>
+        <path d="M3.56 13.75C3.56 14.01 3.78 14.22 4.04 14.22C4.3 14.22 4.49 14.01 4.49 13.75V10.72L3.56 11.26V13.75Z" fill="#1FD1BD"/>
+        <path d="M4.04 4.48C3.85 4.48 3.69 4.6 3.62 4.77V5.67L4.49 6.18V4.98C4.49 4.72 4.3 4.48 4.04 4.48Z" fill="#1FD1BD"/>
+        <path d="M16.09 8.29C15.83 8.29 15.62 8.52 15.62 8.77V9.89C15.62 10.15 15.83 10.38 16.09 10.38C16.35 10.38 16.56 10.15 16.56 9.89V8.77C16.56 8.52 16.35 8.29 16.09 8.29Z" fill="#1FD1BD"/>
+        <path d="M14.38 7.24C14.12 7.24 13.91 7.47 13.91 7.72V11.07C13.91 11.32 14.12 11.55 14.38 11.55C14.64 11.55 14.85 11.32 14.85 11.07V7.72C14.85 7.47 14.64 7.24 14.38 7.24Z" fill="#1FD1BD"/>
+        <path d="M10.45 9.76V12.59C10.45 12.85 10.66 13.08 10.92 13.08C10.97 13.08 11.02 13.07 11.07 13.05C11.28 12.69 11.39 12.26 11.39 11.8C11.39 10.98 11.02 10.28 10.45 9.76Z" fill="#1FD1BD"/>
+        <path d="M10.44 8.3L10.45 8.31C10.79 8.51 11.1 8.75 11.39 9.01V6.13C11.32 6.93 11.04 7.6 10.45 8.23L10.44 8.3Z" fill="#1FD1BD"/>
+        <path d="M12.6 11.86C12.6 11.23 12.44 10.63 12.18 10.09C11.97 9.71 11.7 9.35 11.39 9.01C11.1 8.74 10.79 8.5 10.45 8.31C10.45 8.3 10.44 8.3 10.44 8.3C10.45 8.29 10.45 8.28 10.45 8.27C11.04 7.6 11.32 6.93 11.39 6.13C11.4 6.0 11.41 5.87 11.41 5.74C11.41 5.54 11.39 5.35 11.36 5.17C11.1 3.63 9.79 2.41 7.71 2.41H3.16C3.01 2.41 2.88 2.44 2.78 2.49C2.53 2.6 2.4 2.84 2.4 3.19V5.0L1.84 4.68L1.35 4.39C1.25 4.34 1.15 4.3 1.06 4.27C0.65 4.16 0.29 4.29 0.11 4.58C0.04 4.71 0 4.86 0 5.04V11.99C0 12.16 0.04 12.3 0.11 12.38C0.21 12.52 0.38 12.6 0.59 12.6C0.79 12.6 0.95 12.53 1.06 12.41C1.15 12.31 1.19 12.16 1.19 11.99V5.68L1.84 6.03L2.4 6.36V10.91C2.4 11.19 2.56 11.38 2.78 11.45C2.97 11.51 3.22 11.49 3.46 11.34L3.56 11.28L4.49 10.72L5.29 10.24L6.21 9.69L6.96 9.24L7.3 9.04C7.59 8.88 7.7 8.66 7.7 8.46C7.7 8.27 7.59 8.04 7.3 7.88L6.96 7.68L6.21 7.2L5.29 6.65L4.49 6.18L3.59 5.67V3.6H7.58C8.1 3.6 8.55 3.68 8.93 3.84C9.23 3.96 9.48 4.13 9.67 4.34C10.03 4.72 10.21 5.22 10.21 5.79C10.21 6.42 9.99 6.94 9.67 7.34C9.56 7.47 9.46 7.6 9.35 7.71C9.08 7.97 9.01 8.15 9.01 8.35C9.01 8.58 9.12 8.77 9.57 9.01C9.6 9.02 9.63 9.04 9.67 9.06C9.95 9.22 10.21 9.41 10.44 9.62C11.04 10.17 11.39 10.88 11.39 11.66C11.39 12.12 11.28 12.55 11.07 12.91C10.79 13.41 10.31 13.81 9.67 14.03C9.38 14.13 9.07 14.2 8.73 14.22C8.61 14.23 8.48 14.23 8.35 14.23H3.11C2.98 14.23 2.87 14.25 2.78 14.29C2.53 14.37 2.4 14.56 2.4 14.82C2.4 15.07 2.53 15.26 2.78 15.35C2.87 15.38 2.98 15.4 3.11 15.4H8.35C10.29 15.4 11.6 14.48 12.23 13.24C12.32 13.06 12.39 12.87 12.45 12.67C12.55 12.34 12.6 11.98 12.6 11.62V11.86Z" fill="#4700A3"/>
+      </svg>
+    </div>
+    <div class="header-divider"></div>
+    <div>
+      <div class="header-title">SW Hub</div>
+      <div class="header-sub">Story Handover</div>
+    </div>
   </div>
-  <span class="clock" id="live-clock">--:--:--</span>
+  <div class="header-right">
+    <span class="clock" id="live-clock">--:--:--</span>
+  </div>
 </div>
 
-<div class="shift-bar">
-  <span class="shift-label">Shift</span>
-  <div class="shift-toggle">
-    <button class="shift-btn" id="btn-am" onclick="setShift('AM')">AM</button>
-    <button class="shift-btn" id="btn-pm" onclick="setShift('PM')">PM</button>
-  </div>
-  <div class="date-override">
-    <span class="date-override-label">Date:</span>
-    <span class="date-today-pill" id="date-display">Today</span>
-    <button class="date-change-btn" id="date-change-btn" onclick="toggleDateOverride()">change</button>
-    <input type="date" id="date-override-input" onchange="onDateChange()">
-    <button class="date-change-btn" id="date-reset-btn" onclick="resetDate()" style="display:none; color:var(--red);">reset to today</button>
+<!-- ══ HOME VIEW ══ -->
+<div class="view active" id="view-home">
+  <div class="home">
+    <div class="home-content">
+      <div class="home-eyebrow">South West Hub</div>
+      <div class="home-title">Story<br><span>Handover</span></div>
+      <div class="home-date" id="home-date"></div>
+      <div class="home-cards">
+        <div class="home-card" onclick="goTo('handover')">
+          <div class="home-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1FD1BD" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="home-card-title">Leave Handover</div>
+          <div class="home-card-desc">Submit today's stories from your station</div>
+          <div class="home-card-arrow">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 3l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="home-card" onclick="goTo('archive')">
+          <div class="home-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#1FD1BD" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="#1FD1BD" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="home-card-title">Past Stories</div>
+          <div class="home-card-desc">Search and browse the story archive</div>
+          <div class="home-card-arrow">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 3l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="nav-tabs">
-  <div class="nav-tab active" data-panel="submit">Submit Handover</div>
-  <div class="nav-tab" data-panel="search">Search Stories <span class="badge-count" id="total-badge">0</span></div>
-  <div class="nav-tab" data-panel="setup">Setup</div>
-</div>
-
-<div class="main">
-
-  <div class="panel active" id="panel-submit">
-    <div class="submit-grid">
+<!-- ══ HANDOVER VIEW ══ -->
+<div class="view" id="view-handover">
+  <div class="view-bar">
+    <span class="view-bar-title">Leave Handover</span>
+    <div class="view-bar-right">
+      <div class="shift-toggle">
+        <button class="shift-btn" id="btn-am" onclick="setShift('AM')">AM</button>
+        <button class="shift-btn" id="btn-pm" onclick="setShift('PM')">PM</button>
+      </div>
+      <div class="date-pill-wrap">
+        <span class="date-pill" id="date-display">Today</span>
+        <button class="date-change-btn" id="date-change-btn" onclick="toggleDateOverride()">change</button>
+        <input type="date" id="date-override-input" onchange="onDateChange()">
+        <button class="date-change-btn" id="date-reset-btn" onclick="resetDate()" style="display:none;color:#FFB366">reset</button>
+      </div>
+    </div>
+  </div>
+  <div class="view-content">
+    <div class="handover-grid">
       <div>
-        <div class="card" style="margin-bottom:20px;">
+        <div class="card" style="margin-bottom:20px">
           <div class="card-header">
             <span class="card-title">Handover Input</span>
             <div class="sheets-status">
               <span class="status-dot amber" id="status-dot"></span>
-              <span id="status-text">Sheets not configured</span>
+              <span id="status-text">Connecting…</span>
             </div>
           </div>
           <div class="card-body">
-            <div class="station-row">
-              <div>
-                <label class="field-label">Station</label>
-                <select id="station-select">
-                  <option value="">— Select or auto-detect —</option>
-                  <option>Cornwall</option>
-                  <option>Coventry &amp; Warwickshire</option>
-                  <option>Devon</option>
-                  <option>Dorset</option>
-                  <option>Gloucestershire</option>
-                  <option>Herefordshire &amp; Worcestershire</option>
-                  <option>Somerset</option>
-                  <option>Swindon</option>
-                  <option>West of England</option>
-                  <option>Wiltshire</option>
-                </select>
-              </div>
+            <div style="margin-bottom:14px">
+              <label class="field-label">Station</label>
+              <select id="station-select">
+                <option value="">— Select or auto-detect —</option>
+                <option>Cornwall</option>
+                <option>Coventry &amp; Warwickshire</option>
+                <option>Devon</option>
+                <option>Dorset</option>
+                <option>Gloucestershire</option>
+                <option>Herefordshire &amp; Worcestershire</option>
+                <option>Somerset</option>
+                <option>Swindon</option>
+                <option>West of England</option>
+                <option>Wiltshire</option>
+              </select>
             </div>
             <label class="field-label">Paste handover text</label>
-            <textarea id="handover-input" placeholder="Paste the handover here e.g.&#10;&#10;    GLAMPING@ - Glamping company has already cut summer prices...&#10;    CQC - Cornwall Council adult social care rated as good...&#10;&#10;Station headers (e.g. CORNWALL) are auto-detected."></textarea>
+            <textarea id="handover-input" placeholder="Paste the handover here e.g.&#10;&#10;    GLAMPING@ - Glamping company has already cut summer prices...&#10;    CQC - Cornwall Council adult social care rated as good...&#10;&#10;Station headers (e.g. CORNWALL) are auto-detected if pasting the full hub."></textarea>
             <div class="action-row">
               <button class="btn btn-primary" onclick="parseHandover()">Parse &amp; Preview</button>
-              <button class="btn btn-secondary" onclick="clearInput()">Clear</button>
-              <span id="parse-count" style="font-size:13px; color:var(--ink-3); margin-left:4px;"></span>
+              <button class="btn btn-ghost" onclick="clearInput()">Clear</button>
+              <span id="parse-count" style="font-size:13px;color:var(--ink-3);margin-left:4px"></span>
             </div>
           </div>
         </div>
-
-        <div id="preview-section" style="display:none;">
+        <div id="preview-section" style="display:none">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Preview &mdash; <span id="preview-label"></span></span>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-secondary btn-sm" onclick="clearPreview()">Discard</button>
-                <button class="btn btn-primary btn-sm" onclick="saveToSheets()">Save to Sheets</button>
+              <span class="card-title">Preview — <span id="preview-label"></span></span>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" onclick="clearPreview()">Discard</button>
+                <button class="btn btn-teal btn-sm" onclick="saveToSheets()">Save to Sheets ↗</button>
               </div>
             </div>
             <div class="scrollable">
@@ -196,160 +476,122 @@
           </div>
         </div>
       </div>
-
       <div>
         <div class="tip-box">
           <h4>Format guide</h4>
           <ul>
             <li>One story per line: <code>SLUG - Description</code></li>
-            <li>Audio flagged with <code>@</code> on slug: <code>GLAMPING@</code></li>
-            <li>Blank lines and indentation are ignored</li>
-            <li>Station headers (e.g. <code>CORNWALL</code>) auto-detected</li>
+            <li>Audio flag: <code>GLAMPING@</code></li>
+            <li>Station headers auto-detected</li>
+            <li>Blank lines ignored</li>
           </ul>
         </div>
-        <div class="tip-box" style="border-left-color:var(--blue);">
+        <div class="tip-box" style="border-left-color:var(--purple)">
           <h4>Full hub paste</h4>
           <ul>
-            <li>Paste the entire hub handover at once &mdash; all 10 stations parsed in one go</li>
-            <li>Leave station dropdown blank and it auto-detects each section</li>
+            <li>Paste the entire hub handover — all 10 stations parsed at once</li>
+            <li>Leave station blank to auto-detect each section</li>
           </ul>
         </div>
-        <div class="card" style="margin-top:16px;">
+        <div class="card" style="margin-top:14px">
           <div class="card-header"><span class="card-title">Today's Submissions</span></div>
           <div class="card-body" id="today-submissions">
-            <p style="color:var(--ink-3); font-size:13px;">No submissions yet today.</p>
+            <p style="color:var(--ink-3);font-size:13px">No submissions yet today.</p>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="panel" id="panel-search">
-    <div class="stats-grid">
+<!-- ══ ARCHIVE VIEW ══ -->
+<div class="view" id="view-archive">
+  <div class="view-bar">
+    <span class="view-bar-title">Past Stories</span>
+    <div class="view-bar-right">
+      <button class="btn btn-ghost btn-sm" onclick="loadFromSheets(false)" style="color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2)">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="view-content">
+    <div class="stats-row">
       <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Stories</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-am">0</div><div class="stat-label">AM Stories</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-pm">0</div><div class="stat-label">PM Stories</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-days">0</div><div class="stat-label">Days Logged</div></div>
     </div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Search Archive</span>
-        <button class="btn btn-secondary btn-sm" onclick="loadFromSheets()">Refresh from Sheets</button>
-      </div>
-      <div class="card-body">
-        <div class="search-bar-row">
-          <div class="field-group">
-            <label class="field-label">Keyword</label>
-            <input type="text" id="search-query" placeholder="slug or description...">
+    <div class="archive-layout">
+      <!-- LEFT: CALENDAR + FILTERS -->
+      <div>
+        <div class="cal-card">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="calPrev()">&#8249;</button>
+            <span class="cal-month" id="cal-month-label"></span>
+            <button class="cal-nav" onclick="calNext()">&#8250;</button>
           </div>
-          <div class="field-group">
-            <label class="field-label">Station</label>
-            <select id="search-station">
-              <option value="">All stations</option>
-              <option>Cornwall</option>
-              <option>Coventry &amp; Warwickshire</option>
-              <option>Devon</option>
-              <option>Dorset</option>
-              <option>Gloucestershire</option>
-              <option>Herefordshire &amp; Worcestershire</option>
-              <option>Somerset</option>
-              <option>Swindon</option>
-              <option>West of England</option>
-              <option>Wiltshire</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Shift</label>
-            <select id="search-edition">
-              <option value="">AM &amp; PM</option>
-              <option value="AM">AM only</option>
-              <option value="PM">PM only</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">From</label>
-            <input type="date" id="search-from">
-          </div>
-          <div class="field-group">
-            <label class="field-label">To</label>
-            <input type="date" id="search-to">
-          </div>
-          <div class="field-group" style="justify-content:flex-end;">
-            <button class="btn btn-primary" onclick="runSearch()">Search</button>
-          </div>
+          <div class="cal-grid" id="cal-grid"></div>
         </div>
-        <div class="scrollable">
-          <table class="story-table">
-            <thead><tr><th>Date</th><th>Shift</th><th>Station</th><th>Slug</th><th>Description</th></tr></thead>
-            <tbody id="results-tbody">
-              <tr><td colspan="5" style="padding:32px; text-align:center; color:var(--ink-3);">Use the filters above and click Search</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="margin-top:10px; font-size:12px; color:var(--ink-3);" id="result-count"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="panel-setup">
-    <div class="setup-grid">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Google Sheets Connection</span></div>
-        <div class="card-body">
-          <div class="setup-step">
-            <div class="step-num">1</div>
-            <div class="step-body">
-              <h4>Create a Google Sheet</h4>
-              <p>Create a new Google Sheet, rename the first tab to <strong>Stories</strong>, and add these headers in row 1:</p>
-              <p style="margin-top:8px; font-size:12px; background:var(--surface); padding:8px 10px; border-radius:4px; font-family:monospace; color:var(--ink-2);">Date &nbsp;|&nbsp; Shift &nbsp;|&nbsp; Station &nbsp;|&nbsp; Slug &nbsp;|&nbsp; Description</p>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Filters</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="field-group">
+              <label class="field-label">Keyword</label>
+              <input type="text" id="search-query" placeholder="slug or description…">
             </div>
-          </div>
-          <div class="setup-step">
-            <div class="step-num">2</div>
-            <div class="step-body">
-              <h4>Add the Apps Script</h4>
-              <p>Go to <strong>Extensions &rarr; Apps Script</strong>, paste the code, then deploy as a Web App (Execute as: Me, Access: Anyone). Copy the web app URL.</p>
-              <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="showAppsScript()">View Apps Script code</button>
+            <div class="field-group">
+              <label class="field-label">Station</label>
+              <select id="search-station">
+                <option value="">All stations</option>
+                <option>Cornwall</option>
+                <option>Coventry &amp; Warwickshire</option>
+                <option>Devon</option>
+                <option>Dorset</option>
+                <option>Gloucestershire</option>
+                <option>Herefordshire &amp; Worcestershire</option>
+                <option>Somerset</option>
+                <option>Swindon</option>
+                <option>West of England</option>
+                <option>Wiltshire</option>
+              </select>
             </div>
-          </div>
-          <div class="setup-step">
-            <div class="step-num">3</div>
-            <div class="step-body">
-              <h4>Enter your Web App URL</h4>
-              <div class="input-group" style="margin-top:6px;">
-                <input type="text" id="sheets-url" class="full-width" placeholder="https://script.google.com/macros/s/\u2026/exec">
-                <button class="inline-btn" onclick="saveSheetUrl()">Save</button>
-              </div>
+            <div class="field-group">
+              <label class="field-label">Shift</label>
+              <select id="search-edition">
+                <option value="">AM &amp; PM</option>
+                <option value="AM">AM only</option>
+                <option value="PM">PM only</option>
+              </select>
             </div>
-          </div>
-          <div class="setup-step">
-            <div class="step-num">4</div>
-            <div class="step-body">
-              <h4>Test connection</h4>
-              <button class="btn btn-secondary btn-sm" onclick="testConnection()">Test connection</button>
-              <span id="connection-result" style="font-size:13px; margin-left:10px; color:var(--ink-3);"></span>
-            </div>
+            <button class="btn btn-primary" onclick="runSearch()" style="width:100%">Search</button>
+            <button class="btn btn-ghost" onclick="clearSearch()" style="width:100%">Clear filters</button>
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Apps Script Code</span></div>
-        <div class="card-body" id="apps-script-panel" style="display:none;">
-          <p style="font-size:12px; color:var(--ink-3); margin-bottom:10px;">Paste this into your Apps Script editor:</p>
-          <pre id="apps-script-code" style="font-size:11px; background:var(--surface); padding:12px; border-radius:6px; overflow:auto; max-height:400px; color:var(--ink-2); line-height:1.5; white-space:pre-wrap;"></pre>
-          <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="copyAppsScript()">Copy to clipboard</button>
-        </div>
-        <div class="card-body" id="apps-script-hint">
-          <p style="color:var(--ink-3); font-size:13px;">Click "View Apps Script code" in step 2 to reveal.</p>
+      <!-- RIGHT: RESULTS -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="results-title">All Stories</span>
+            <span style="font-size:12px;color:var(--ink-3)" id="result-count"></span>
+          </div>
+          <div class="scrollable">
+            <table class="story-table">
+              <thead><tr><th>Date</th><th>Shift</th><th>Station</th><th>Slug</th><th>Description</th></tr></thead>
+              <tbody id="results-tbody">
+                <tr><td colspan="5" style="padding:32px;text-align:center;color:var(--ink-3)">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
 </div>
+
 <div id="toast"></div>
 
 <script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwVihaZqGhlMO-cvAyzv18Rzpu_nFZ_luPoTu7PuntEqIL6SXCe4sy6Y09-xfZO5GW9CA/exec';
+
 const STATION_HEADERS = {
   'CORNWALL':'Cornwall','COVENTRY':'Coventry & Warwickshire',
   'COVENTRY & WARWICKSHIRE':'Coventry & Warwickshire','DEVON':'Devon',
@@ -364,13 +606,34 @@ let parsedStories = [];
 let allStories = [];
 let currentShift = localStorage.getItem('sw_hub_shift') || 'AM';
 let overrideDate = null;
+let calDate = new Date();
+let selectedCalDate = null;
 
+// ── CLOCK & HOME DATE ──
 function updateClock() {
   document.getElementById('live-clock').textContent =
     new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 setInterval(updateClock,1000); updateClock();
 
+document.getElementById('home-date').textContent =
+  new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// ── NAVIGATION ──
+function goHome() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-home').classList.add('active');
+  document.getElementById('back-btn').style.display = 'none';
+}
+
+function goTo(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.getElementById('back-btn').style.display = 'flex';
+  if (view === 'archive') { updateStats(); renderCalendar(); showAllStories(); }
+}
+
+// ── SHIFT ──
 function setShift(s) {
   currentShift = s;
   localStorage.setItem('sw_hub_shift', s);
@@ -379,16 +642,14 @@ function setShift(s) {
 }
 setShift(currentShift);
 
+// ── DATE OVERRIDE ──
 function getActiveDate() { return overrideDate || new Date().toISOString().split('T')[0]; }
 
 function toggleDateOverride() {
   const inp = document.getElementById('date-override-input');
-  inp.style.display = 'block';
-  inp.value = getActiveDate();
-  inp.focus();
+  inp.style.display = 'block'; inp.value = getActiveDate(); inp.focus();
   document.getElementById('date-change-btn').style.display = 'none';
 }
-
 function onDateChange() {
   const val = document.getElementById('date-override-input').value;
   const today = new Date().toISOString().split('T')[0];
@@ -397,41 +658,28 @@ function onDateChange() {
   const d = new Date(val + 'T12:00:00');
   const fmt = d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   const pill = document.getElementById('date-display');
-  pill.textContent = fmt;
-  pill.style.cssText = 'background:#FEF3E6; border-color:#B85C00; color:#B85C00;';
+  pill.textContent = fmt; pill.className = 'date-pill overridden';
   document.getElementById('date-reset-btn').style.display = 'inline';
 }
-
 function resetDate() {
   overrideDate = null;
   document.getElementById('date-override-input').style.display = 'none';
   document.getElementById('date-change-btn').style.display = 'inline';
   document.getElementById('date-reset-btn').style.display = 'none';
   const pill = document.getElementById('date-display');
-  pill.textContent = 'Today'; pill.style.cssText = '';
+  pill.textContent = 'Today'; pill.className = 'date-pill';
 }
 
-document.querySelectorAll('.nav-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
-    if (tab.dataset.panel === 'search') updateStats();
-  });
-});
-
+// ── PARSE ──
 function parseHandover() {
   const raw = document.getElementById('handover-input').value.trim();
   if (!raw) { toast('Paste some handover text first'); return; }
   const selectedStation = document.getElementById('station-select').value;
-  const date = getActiveDate();
-  const shift = currentShift;
+  const date = getActiveDate(); const shift = currentShift;
   const lines = raw.split('\n');
   parsedStories = [];
   let currentStation = selectedStation || null;
   let detectedStations = [];
-
   for (let raw_line of lines) {
     const line = raw_line.trim();
     if (!line) continue;
@@ -443,14 +691,13 @@ function parseHandover() {
     }
     if (!line.includes(' - ')) continue;
     const dashIdx = line.indexOf(' - ');
-    let slugRaw = line.substring(0, dashIdx).trim().replace(/^[\s*\-]+/,'');
-    let desc = line.substring(dashIdx + 3).trim();
+    let slugRaw = line.substring(0,dashIdx).trim().replace(/^[\s*\-]+/,'');
+    let desc = line.substring(dashIdx+3).trim();
     if (!slugRaw) continue;
     const hasAudio = slugRaw.endsWith('@');
     const slug = slugRaw.replace(/@$/,'').toUpperCase();
-    parsedStories.push({ date, shift, station: currentStation || selectedStation || '(unknown)', slug, hasAudio, description: desc });
+    parsedStories.push({date,shift,station:currentStation||selectedStation||'(unknown)',slug,hasAudio,description:desc});
   }
-
   if (!parsedStories.length) { toast('No stories found \u2014 check format (SLUG - Description)'); return; }
   const label = selectedStation || (detectedStations.length ? detectedStations.join(', ') : 'Unknown');
   renderPreview(parsedStories, label, date, shift);
@@ -460,20 +707,18 @@ function parseHandover() {
 function renderPreview(stories, label, date, shift) {
   const tbody = document.getElementById('preview-tbody');
   tbody.innerHTML = '';
-  const d = new Date(date + 'T12:00:00');
+  const d = new Date(date+'T12:00:00');
   const dateStr = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
   const sc = shift==='AM'?'badge-am':'badge-pm';
   document.getElementById('preview-label').innerHTML =
-    esc(label) + ' &nbsp;<span class="' + sc + '">' + shift + '</span>&nbsp; <span style="font-size:13px;font-weight:400;color:var(--ink-3);">' + dateStr + '</span>';
-
+    esc(label)+'&nbsp;<span class="'+sc+'">'+shift+'</span>&nbsp;<span style="font-size:13px;font-weight:400;color:var(--ink-3)">'+dateStr+'</span>';
   stories.forEach(s => {
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td class="slug-cell">' + esc(s.slug) + (s.hasAudio ? '<span class="flag-audio">AUDIO</span>' : '') + '</td>' +
-      '<td class="desc-cell">' + esc(s.description) + '</td>' +
-      '<td>' + (s.station !== label ? '<span class="station-badge">' + esc(s.station) + '</span>' : '') + '</td>';
+    tr.innerHTML = '<td class="slug-cell">'+esc(s.slug)+(s.hasAudio?'<span class="flag-audio">AUDIO</span>':'')+'</td>'+
+      '<td class="desc-cell">'+esc(s.description)+'</td>'+
+      '<td>'+(s.station!==label?'<span class="station-badge">'+esc(s.station)+'</span>':'')+'</td>';
     tbody.appendChild(tr);
   });
-
   document.getElementById('preview-section').style.display = 'block';
   document.getElementById('preview-section').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -483,90 +728,140 @@ function clearPreview() {
   document.getElementById('preview-section').style.display = 'none';
   document.getElementById('parse-count').textContent = '';
 }
-
 function clearInput() {
   document.getElementById('handover-input').value = '';
   clearPreview();
 }
 
+// ── SAVE ──
 async function saveToSheets() {
   if (!parsedStories.length) { toast('Nothing to save'); return; }
-  const url = SHEETS_URL;
   try {
-    const resp = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({action:'append', rows: parsedStories})
+    const resp = await fetch(SHEETS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'append', rows:parsedStories})
     });
     const data = await resp.json();
-    if (data.result === 'ok') {
-      toast('\u2713 ' + parsedStories.length + ' stories saved \u2014 reloading\u2026');
+    if (data.result==='ok') {
+      toast('\u2713 '+parsedStories.length+' stories saved \u2014 reloading\u2026');
       clearPreview();
-      await loadFromSheets();
-    } else {
-      toast('Sheets error: ' + (data.error || 'unknown'));
+      await loadFromSheets(true);
+    } else { toast('Sheets error: '+(data.error||'unknown')); }
+  } catch(e) { toast('Could not reach Sheets: '+e.message); }
+}
+
+// ── LOAD ──
+async function loadFromSheets(silent) {
+  try {
+    const resp = await fetch(SHEETS_URL+'?action=read');
+    const data = await resp.json();
+    if (data.rows) {
+      allStories = data.rows;
+      updateStats(); updateTodaySubmissions(); updateSheetStatus(true);
+      if (!silent) toast('\u2713 Loaded '+allStories.length+' stories');
+      renderCalendar();
     }
   } catch(e) {
-    toast('Could not reach Sheets: ' + e.message);
+    updateSheetStatus(false);
+    if (!silent) toast('Could not load from Sheets: '+e.message);
   }
 }
 
+// ── SEARCH ──
 function runSearch() {
   const q = document.getElementById('search-query').value.toLowerCase();
   const station = document.getElementById('search-station').value;
   const edition = document.getElementById('search-edition').value;
-  const from = document.getElementById('search-from').value;
-  const to = document.getElementById('search-to').value;
-
-  let results = allStories.filter(s => {
-    if (station && s.station !== station) return false;
-    if (edition && s.shift !== edition) return false;
-    if (from && s.date < from) return false;
-    if (to && s.date > to) return false;
+  selectedCalDate = null;
+  renderCalendar();
+  const results = allStories.filter(s => {
+    if (station && s.station!==station) return false;
+    if (edition && s.shift!==edition) return false;
     if (q && !s.slug.toLowerCase().includes(q) && !s.description.toLowerCase().includes(q)) return false;
     return true;
   });
+  renderResults(results, q ? '"'+q+'"' : 'Search Results');
+}
 
+function clearSearch() {
+  document.getElementById('search-query').value='';
+  document.getElementById('search-station').value='';
+  document.getElementById('search-edition').value='';
+  selectedCalDate = null;
+  renderCalendar();
+  showAllStories();
+}
+
+function showAllStories() {
+  const sorted = [...allStories].sort((a,b)=>b.date.localeCompare(a.date)||a.slug.localeCompare(b.slug));
+  renderResults(sorted, 'All Stories');
+}
+
+function showStoriesForDate(dateStr) {
+  const results = allStories.filter(s => s.date===dateStr);
+  const d = new Date(dateStr+'T12:00:00');
+  const label = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  renderResults(results, label);
+}
+
+function renderResults(results, title) {
+  document.getElementById('results-title').textContent = title;
+  document.getElementById('result-count').textContent = results.length+' stor'+(results.length===1?'y':'ies');
   const tbody = document.getElementById('results-tbody');
   tbody.innerHTML = '';
   if (!results.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--ink-3);">No matching stories</td></tr>';
-    document.getElementById('result-count').textContent = ''; return;
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--ink-3)">No stories found</td></tr>';
+    return;
   }
-
-  results.sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
   results.forEach(s => {
     const sc = s.shift==='AM'?'badge-am':'badge-pm';
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td style="white-space:nowrap;color:var(--ink-3);font-size:12px;">' + esc(fmtDate(s.date)) + '</td>' +
-      '<td><span class="' + sc + '">' + esc(s.shift||'') + '</span></td>' +
-      '<td><span class="station-badge">' + esc(s.station) + '</span></td>' +
-      '<td class="slug-cell">' + esc(s.slug) + (s.hasAudio?'<span class="flag-audio">AUDIO</span>':'') + '</td>' +
-      '<td class="desc-cell">' + esc(s.description) + '</td>';
+    tr.innerHTML = '<td style="white-space:nowrap;color:var(--ink-3);font-size:12px">'+esc(fmtDate(s.date))+'</td>'+
+      '<td><span class="'+sc+'">'+esc(s.shift||'')+'</span></td>'+
+      '<td><span class="station-badge">'+esc(s.station)+'</span></td>'+
+      '<td class="slug-cell">'+esc(s.slug)+(s.hasAudio?'<span class="flag-audio">AUDIO</span>':'')+'</td>'+
+      '<td class="desc-cell">'+esc(s.description)+'</td>';
     tbody.appendChild(tr);
   });
-  document.getElementById('result-count').textContent = results.length + ' result' + (results.length!==1?'s':'') + ' found';
 }
 
 document.getElementById('search-query').addEventListener('keydown', e => { if(e.key==='Enter') runSearch(); });
 
-function fmtDate(iso) {
-  if (!iso) return '';
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+// ── CALENDAR ──
+function renderCalendar() {
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  const datesWithStories = new Set(allStories.map(s=>s.date));
+  const today = new Date().toISOString().split('T')[0];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = months[month]+' '+year;
+  const firstDay = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const startOffset = (firstDay+6)%7; // Mon start
+  let html = '<div class="cal-dow">M</div><div class="cal-dow">T</div><div class="cal-dow">W</div><div class="cal-dow">T</div><div class="cal-dow">F</div><div class="cal-dow">S</div><div class="cal-dow">S</div>';
+  for (let i=0;i<startOffset;i++) html+='<div class="cal-day empty"></div>';
+  for (let d=1;d<=daysInMonth;d++) {
+    const iso = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    let cls = 'cal-day';
+    if (iso===today) cls+=' today';
+    if (iso===selectedCalDate) cls+=' selected';
+    if (datesWithStories.has(iso)) cls+=' has-stories';
+    html+='<div class="'+cls+'" onclick="selectCalDate(\''+iso+'\')" >'+d+'</div>';
+  }
+  document.getElementById('cal-grid').innerHTML = html;
 }
 
-async function loadFromSheets(silent) {
-  try {
-    const resp = await fetch(SHEETS_URL + '?action=read');
-    const data = await resp.json();
-    if (data.rows) {
-      allStories = data.rows;
-      updateStats(); updateTotalBadge(); updateTodaySubmissions();
-      if (!silent) toast('\u2713 Loaded ' + allStories.length + ' stories from Sheets');
-    }
-  } catch(e) { if (!silent) toast('Could not load from Sheets: ' + e.message); }
+function selectCalDate(iso) {
+  selectedCalDate = selectedCalDate===iso ? null : iso;
+  renderCalendar();
+  if (selectedCalDate) showStoriesForDate(selectedCalDate);
+  else showAllStories();
 }
 
+function calPrev() { calDate.setMonth(calDate.getMonth()-1); renderCalendar(); }
+function calNext() { calDate.setMonth(calDate.getMonth()+1); renderCalendar(); }
+
+// ── STATS & STATUS ──
 function updateStats() {
   document.getElementById('stat-total').textContent = allStories.length;
   document.getElementById('stat-am').textContent = allStories.filter(s=>s.shift==='AM').length;
@@ -574,142 +869,43 @@ function updateStats() {
   document.getElementById('stat-days').textContent = new Set(allStories.map(s=>s.date)).size;
 }
 
-function updateTotalBadge() { document.getElementById('total-badge').textContent = allStories.length; }
-
 function updateTodaySubmissions() {
   const today = new Date().toISOString().split('T')[0];
-  const ts = allStories.filter(s => s.date === today);
+  const ts = allStories.filter(s=>s.date===today);
   const el = document.getElementById('today-submissions');
-  if (!ts.length) { el.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No submissions yet today.</p>'; return; }
+  if (!ts.length) { el.innerHTML='<p style="color:var(--ink-3);font-size:13px">No submissions yet today.</p>'; return; }
   const byStation = {};
-  ts.forEach(s => { byStation[s.station] = (byStation[s.station]||0) + 1; });
-  el.innerHTML = Object.entries(byStation).map(([st,c]) =>
-    '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule);font-size:13px;"><span>' + esc(st) + '</span><span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;color:var(--red);">' + c + '</span></div>'
-  ).join('') + '<p style="margin-top:10px;font-size:12px;color:var(--ink-3);">' + ts.length + ' total today</p>';
+  ts.forEach(s=>{ byStation[s.station]=(byStation[s.station]||0)+1; });
+  el.innerHTML = Object.entries(byStation).map(([st,c])=>
+    '<div class="today-row"><span>'+esc(st)+'</span><span class="today-count">'+c+'</span></div>'
+  ).join('')+'<p style="margin-top:10px;font-size:12px;color:var(--ink-3)">'+ts.length+' total today</p>';
 }
 
-function saveSheetUrl() {
-  const url = document.getElementById('sheets-url').value.trim();
-  if (!url) { toast('Paste the web app URL first'); return; }
-  localStorage.setItem('sw_hub_sheets_url', url);
-  updateSheetStatus(); toast('Sheets URL saved');
+function updateSheetStatus(ok) {
+  document.getElementById('status-dot').className='status-dot '+(ok?'green':'amber');
+  document.getElementById('status-text').textContent = ok?'Sheets connected':'Connecting…';
 }
 
-function updateSheetStatus() {
-  const url = localStorage.getItem('sw_hub_sheets_url');
-  document.getElementById('status-dot').className = 'status-dot ' + (url?'green':'amber');
-  document.getElementById('status-text').textContent = url ? 'Sheets connected' : 'Sheets not configured';
+// ── HELPERS ──
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
-
-async function testConnection() {
-  const url = localStorage.getItem('sw_hub_sheets_url');
-  const el = document.getElementById('connection-result');
-  if (!url) { el.textContent = 'No URL saved'; el.style.color='var(--red)'; return; }
-  el.textContent = 'Testing\u2026'; el.style.color='var(--ink-3)';
-  try {
-    const resp = await fetch(url + '?action=ping');
-    const data = await resp.json();
-    if (data.result==='pong') { el.textContent='\u2713 Connected!'; el.style.color='var(--green)'; }
-    else { el.textContent='\u26a0 Unexpected response'; el.style.color='var(--amber)'; }
-  } catch(e) { el.textContent='\u2717 Failed: ' + e.message; el.style.color='var(--red)'; }
-}
-
-const APPS_SCRIPT = `function doPost(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName('Stories');
-    var body = JSON.parse(e.postData.contents);
-    if (body.action === 'append') {
-      body.rows.forEach(function(r) {
-        sheet.appendRow([r.date, r.shift, r.station, r.slug, r.description]);
-      });
-      return ContentService
-        .createTextOutput(JSON.stringify({result:'ok', count: body.rows.length}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'error', error:'Unknown action'}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'error', error: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  try {
-    var action = e.parameter.action;
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (action === 'ping') {
-      return ContentService
-        .createTextOutput(JSON.stringify({result:'pong'}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    if (action === 'read') {
-      var sheet = ss.getSheetByName('Stories');
-      var data = sheet.getDataRange().getValues();
-      if (data.length <= 1) {
-        return ContentService
-          .createTextOutput(JSON.stringify({result:'ok', rows:[]}))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-      var rows = data.slice(1).map(function(row) {
-        return {
-          date: row[0] instanceof Date
-            ? Utilities.formatDate(row[0], Session.getScriptTimeZone(), 'yyyy-MM-dd')
-            : String(row[0]),
-          shift:       String(row[1] || ''),
-          station:     String(row[2] || ''),
-          slug:        String(row[3] || ''),
-          description: String(row[4] || '')
-        };
-      });
-      return ContentService
-        .createTextOutput(JSON.stringify({result:'ok', rows: rows}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'error', error:'Unknown action'}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'error', error: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}`;
-
-function showAppsScript() {
-  document.getElementById('apps-script-code').textContent = APPS_SCRIPT;
-  document.getElementById('apps-script-panel').style.display = 'block';
-  document.getElementById('apps-script-hint').style.display = 'none';
-}
-function copyAppsScript() {
-  navigator.clipboard.writeText(APPS_SCRIPT).then(() => toast('Apps Script code copied'));
-}
-
 let toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3500);
 }
-
 function esc(s) {
-  if (!s && s!==0) return '';
+  if(!s&&s!==0) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwVihaZqGhlMO-cvAyzv18Rzpu_nFZ_luPoTu7PuntEqIL6SXCe4sy6Y09-xfZO5GW9CA/exec';
-
-function init() {
-  localStorage.removeItem('sw_hub_stories');
-  document.getElementById('sheets-url').value = SHEETS_URL;
-  updateSheetStatus();
-  loadFromSheets(true);
-}
-init();
+// ── INIT ──
+localStorage.removeItem('sw_hub_stories');
+loadFromSheets(true);
 </script>
 </body>
 </html>
